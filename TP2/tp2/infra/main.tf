@@ -73,3 +73,66 @@ resource "random_integer" "random" {
   min = 1
   max = 50000
 }
+
+resource "aws_cloudfront_origin_access_identity" "origin_identity" {
+  comment = "OAI for CloudFront to access S3 bucket"
+}
+
+
+data "aws_iam_policy_document" "cloudfront_read_access" {
+  statement {
+    actions   = ["s3:GetObject"]
+    resources = ["${aws_s3_bucket.main.arn}/*"]
+
+    principals {
+      type        = "AWS"
+      identifiers = [aws_cloudfront_origin_access_identity.origin_identity.iam_arn]
+    }
+  }
+}
+
+resource "aws_s3_bucket_policy" "cloudfront_read" {
+  bucket = aws_s3_bucket.main.id
+  policy = data.aws_iam_policy_document.cloudfront_read_access.json
+}
+
+resource "aws_cloudfront_distribution" "cdn" {
+  origin {
+    domain_name = aws_s3_bucket.main.bucket_regional_domain_name
+    origin_id   = "s3Origin"
+
+    s3_origin_config {
+      origin_access_identity = aws_cloudfront_origin_access_identity.origin_identity.cloudfront_access_identity_path
+    }
+  }
+
+  enabled             = true
+  default_root_object = "index.html"
+
+  default_cache_behavior {
+    allowed_methods  = ["GET", "HEAD"]
+    cached_methods   = ["GET", "HEAD"]
+    target_origin_id = "s3Origin"
+
+    forwarded_values {
+      query_string = false
+      cookies {
+        forward = "none"
+      }
+    }
+
+    viewer_protocol_policy = "redirect-to-https"
+  }
+
+  restrictions {
+    geo_restriction {
+      restriction_type = "none"
+    }
+  }
+
+  viewer_certificate {
+    cloudfront_default_certificate = true
+  }
+
+  tags = var.tags
+}
