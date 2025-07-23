@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest # Use an Ubuntu runner for this job
     defaults:
       run:
-        working-directory: .TD2/td2/infra
+        working-directory: TD2/td2/infra
     steps:
       - name: Checkout # Step to check out the code from the repository
         uses: actions/checkout@v4 # Specifies the action to use and version
