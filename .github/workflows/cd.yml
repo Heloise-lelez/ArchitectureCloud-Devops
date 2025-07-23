@@ -1,0 +1,31 @@
+name: Deploy with terraform
+
+on: push
+
+permissions:
+  id-token: write # Permission to write an ID token
+  contents: read # Permission to read contents
+
+jobs:
+  terraform_deploy:
+    runs-on: ubuntu-latest # Use an Ubuntu runner for this job
+    defaults:
+      run:
+        working-directory: ./infra
+    steps:
+      - name: Checkout # Step to check out the code from the repository
+        uses: actions/checkout@v4 # Specifies the action to use and version
+      - name: Configure AWS credentials # Step to configure AWS credentials for AWS operations
+        uses: aws-actions/configure-aws-credentials@v4 # specifies the action to use and version
+        with:
+          audience: sts.amazonaws.com # The audience for the AWS credentials
+          role-to-assume: ${{secrets.AWS_IAM_ROLE}} # The AWS role ARN to assume from secrets
+          aws-region: eu-west-1 # The AWS region for operations
+      - name: deploy terraform # Step to deploy using a custom script
+        run: |
+          terraform fmt
+          terraform init
+          terraform apply --auto-approve=true
+      - name: destroy terraform # Step to deploy using a custom script
+        run: |
+          terraform destroy --auto-approve=true
