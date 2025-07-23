@@ -3,29 +3,35 @@ name: Deploy with terraform
 on: push
 
 permissions:
-  id-token: write # Permission to write an ID token
-  contents: read # Permission to read contents
+  id-token: write
+  contents: read
 
 jobs:
   terraform_deploy:
-    runs-on: ubuntu-latest # Use an Ubuntu runner for this job
+    runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./infra
+        working-directory: TP2/tp2/infra
     steps:
-      - name: Checkout # Step to check out the code from the repository
-        uses: actions/checkout@v4 # Specifies the action to use and version
-      - name: Configure AWS credentials # Step to configure AWS credentials for AWS operations
-        uses: aws-actions/configure-aws-credentials@v4 # specifies the action to use and version
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          audience: sts.amazonaws.com # The audience for the AWS credentials
-          role-to-assume: ${{secrets.AWS_IAM_ROLE}} # The AWS role ARN to assume from secrets
-          aws-region: eu-west-1 # The AWS region for operations
-      - name: deploy terraform # Step to deploy using a custom script
+          audience: sts.amazonaws.com
+          role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
+          aws-region: eu-west-1
+
+      - name: Deploy terraform
         run: |
           terraform fmt
           terraform init
           terraform apply --auto-approve=true
-      - name: destroy terraform # Step to deploy using a custom script
+
+      - name: Destroy terraform
         run: |
           terraform destroy --auto-approve=true
