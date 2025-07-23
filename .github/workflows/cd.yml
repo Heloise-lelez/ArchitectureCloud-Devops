@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: TP2/tp2/infra
+        working-directory: ./infra
     steps:
       - name: Checkout
         uses: actions/checkout@v4
